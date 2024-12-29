@@ -201,7 +201,7 @@ pub enum PollResult {
 ///
 /// For a more detailed description of these phases, check out the [documentation for the Driver interface](crate::driver).
 ///
-#[embed_doc_image("usb-host-phases", "doc/usb-host-phases.png")]
+#[embed_doc_image("usb-host-phases", "./doc/usb-host-phases.png")]
 pub struct UsbHost<B> {
     bus: B,
     state: State,
