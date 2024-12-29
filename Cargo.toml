@@ -1,5 +1,6 @@
 [workspace]
-members = ["usbh"]
+members = ["usbh", "usbh-rp2040"]
+default-members = ["usbh", "usbh-rp2040"]
 resolver = "2"
 
 [workspace.package]
