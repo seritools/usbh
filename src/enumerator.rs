@@ -1,9 +1,6 @@
 //! alternative implementation to `enumeration`
 
-use crate::{
-    Event,
-    types::ConnectionSpeed,
-};
+use crate::{types::ConnectionSpeed, Event};
 
 struct Enumerator {
     delay0: u8,
@@ -75,16 +72,16 @@ impl Enumerator {
             WaitDescriptor => {
                 if let Event::ControlInData(_, _) = event {
                     self.state = Reset1;
-                    return Some(Action::ResetBus)
+                    return Some(Action::ResetBus);
                 }
-            },
+            }
 
             Reset1 => {
                 if let Event::Attached(speed) = event {
                     self.speed = speed;
                     self.state = Delay1(self.delay1);
                 }
-            },
+            }
 
             Delay1(n) => {
                 if let Event::Sof = event {
@@ -100,11 +97,11 @@ impl Enumerator {
             WaitSetAddress => {
                 if let Event::ControlInData(_, _) = event {
                     self.state = Done;
-                    return Some(Action::Done)
+                    return Some(Action::Done);
                 }
-            },
+            }
 
-            Done => {},
+            Done => {}
         }
 
         None

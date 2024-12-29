@@ -1,13 +1,13 @@
-use super::{
-    Driver,
-    detector::SimpleDetector,
-};
-use crate::{UsbHost, PipeId, ControlError};
+use super::{detector::SimpleDetector, Driver};
 use crate::bus::HostBus;
-use crate::types::{ConnectionSpeed, DeviceAddress, TransferType, SetupPacket};
+use crate::types::{ConnectionSpeed, DeviceAddress, SetupPacket, TransferType};
+use crate::{ControlError, PipeId, UsbHost};
+use defmt::{bitflags, debug, error, info, Format};
 use usb_device::control::Request;
-use usb_device::{UsbDirection, control::{Recipient, RequestType}};
-use defmt::{error, debug, info, Format, bitflags};
+use usb_device::{
+    control::{Recipient, RequestType},
+    UsbDirection,
+};
 
 #[derive(Copy, Clone)]
 struct HubDevice {
@@ -67,7 +67,10 @@ fn parse_port_status(data: &[u8]) -> Option<PortStatus> {
         None
     } else {
         Some(PortStatus {
-            bits: (data[0] as u32) | ((data[1] as u32) << 8) | ((data[2] as u32) << 16) | ((data[3] as u32) << 24),
+            bits: (data[0] as u32)
+                | ((data[1] as u32) << 8)
+                | ((data[2] as u32) << 16)
+                | ((data[3] as u32) << 24),
         })
     }
 }
@@ -156,7 +159,8 @@ impl From<ControlError> for HubError {
 /// A [`Driver`] which logs various events
 pub struct HubDriver<const MAX_HUBS: usize = 4> {
     devices: [Option<HubDevice>; MAX_HUBS],
-    detector: SimpleDetector<0x09, 0x00, { UsbDirection::In as u8 }, { TransferType::Interrupt as u8 }>,
+    detector:
+        SimpleDetector<0x09, 0x00, { UsbDirection::In as u8 }, { TransferType::Interrupt as u8 }>,
     event: Option<HubEvent>,
 }
 
@@ -173,7 +177,11 @@ impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
         self.event.take()
     }
 
-    pub fn get_hub_descriptor<B: HostBus>(&mut self, dev_addr: DeviceAddress, host: &mut UsbHost<B>) -> Result<(), HubError> {
+    pub fn get_hub_descriptor<B: HostBus>(
+        &mut self,
+        dev_addr: DeviceAddress,
+        host: &mut UsbHost<B>,
+    ) -> Result<(), HubError> {
         if let Some(device) = self.find_device(dev_addr) {
             host.control_in(
                 Some(dev_addr),
@@ -185,7 +193,7 @@ impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
                     Request::GET_DESCRIPTOR,
                     0x29 << 8, // Hub
                     0,
-                    8
+                    8,
                 ),
             )?;
             device.control_state = ControlState::GetDescriptor;
@@ -195,7 +203,11 @@ impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
         }
     }
 
-    pub fn get_hub_status<B: HostBus>(&mut self, dev_addr: DeviceAddress, host: &mut UsbHost<B>) -> Result<(), HubError> {
+    pub fn get_hub_status<B: HostBus>(
+        &mut self,
+        dev_addr: DeviceAddress,
+        host: &mut UsbHost<B>,
+    ) -> Result<(), HubError> {
         if let Some(device) = self.find_device(dev_addr) {
             host.control_in(
                 Some(dev_addr),
@@ -217,7 +229,12 @@ impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
         }
     }
 
-    pub fn get_port_status<B: HostBus>(&mut self, dev_addr: DeviceAddress, port: u8, host: &mut UsbHost<B>) -> Result<(), HubError> {
+    pub fn get_port_status<B: HostBus>(
+        &mut self,
+        dev_addr: DeviceAddress,
+        port: u8,
+        host: &mut UsbHost<B>,
+    ) -> Result<(), HubError> {
         if let Some(device) = self.find_device(dev_addr) {
             host.control_in(
                 Some(dev_addr),
@@ -239,11 +256,26 @@ impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
         }
     }
 
-    pub fn set_port_feature<B: HostBus>(&mut self, dev_addr: DeviceAddress, port: u8, feature: PortFeature, host: &mut UsbHost<B>) -> Result<(), HubError> {
+    pub fn set_port_feature<B: HostBus>(
+        &mut self,
+        dev_addr: DeviceAddress,
+        port: u8,
+        feature: PortFeature,
+        host: &mut UsbHost<B>,
+    ) -> Result<(), HubError> {
         if let Some(device) = self.find_device(dev_addr) {
             host.control_out(
-                Some(dev_addr), Some(device.control_pipe),
-                SetupPacket::new(UsbDirection::Out, RequestType::Class, Recipient::Other, Request::SET_FEATURE, feature as u16, port as u16, 0),
+                Some(dev_addr),
+                Some(device.control_pipe),
+                SetupPacket::new(
+                    UsbDirection::Out,
+                    RequestType::Class,
+                    Recipient::Other,
+                    Request::SET_FEATURE,
+                    feature as u16,
+                    port as u16,
+                    0,
+                ),
                 &[],
             )?;
             device.control_state = ControlState::SetPortFeature(port, feature);
@@ -253,11 +285,26 @@ impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
         }
     }
 
-    pub fn clear_port_feature<B: HostBus>(&mut self, dev_addr: DeviceAddress, port: u8, feature: PortFeature, host: &mut UsbHost<B>) -> Result<(), HubError> {
+    pub fn clear_port_feature<B: HostBus>(
+        &mut self,
+        dev_addr: DeviceAddress,
+        port: u8,
+        feature: PortFeature,
+        host: &mut UsbHost<B>,
+    ) -> Result<(), HubError> {
         if let Some(device) = self.find_device(dev_addr) {
             host.control_out(
-                Some(dev_addr), Some(device.control_pipe),
-                SetupPacket::new(UsbDirection::Out, RequestType::Class, Recipient::Other, Request::CLEAR_FEATURE, feature as u16, port as u16, 0),
+                Some(dev_addr),
+                Some(device.control_pipe),
+                SetupPacket::new(
+                    UsbDirection::Out,
+                    RequestType::Class,
+                    Recipient::Other,
+                    Request::CLEAR_FEATURE,
+                    feature as u16,
+                    port as u16,
+                    0,
+                ),
                 &[],
             )?;
             device.control_state = ControlState::ClearPortFeature(port, feature);
@@ -268,23 +315,26 @@ impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
     }
 
     fn find_device(&mut self, dev_addr: DeviceAddress) -> Option<&mut HubDevice> {
-        self.devices.iter_mut().filter_map(|d| d.as_mut()).find(|d| d.dev_addr == dev_addr)
+        self.devices
+            .iter_mut()
+            .filter_map(|d| d.as_mut())
+            .find(|d| d.dev_addr == dev_addr)
     }
 }
 
 impl<B: HostBus, const MAX_HUBS: usize> Driver<B> for HubDriver<MAX_HUBS> {
-    fn attached(
-        &mut self,
-        dev_addr: DeviceAddress,
-        _connection_speed: ConnectionSpeed,
-    ) {
+    fn attached(&mut self, dev_addr: DeviceAddress, _connection_speed: ConnectionSpeed) {
         self.detector.attached(dev_addr);
     }
 
     fn detached(&mut self, dev_addr: DeviceAddress) {
-        if let Some(slot) = self.devices.iter_mut().find(|d| d.is_some() && d.unwrap().dev_addr == dev_addr) {
+        if let Some(slot) = self
+            .devices
+            .iter_mut()
+            .find(|d| d.is_some() && d.unwrap().dev_addr == dev_addr)
+        {
             slot.take();
-            self.event = Some(HubEvent::HubRemoved(dev_addr));            
+            self.event = Some(HubEvent::HubRemoved(dev_addr));
         } else {
             self.detector.detached(dev_addr);
         }
@@ -298,17 +348,20 @@ impl<B: HostBus, const MAX_HUBS: usize> Driver<B> for HubDriver<MAX_HUBS> {
         self.detector.configure(dev_addr)
     }
 
-    fn configured(
-        &mut self,
-        dev_addr: DeviceAddress,
-        value: u8,
-        host: &mut UsbHost<B>,
-    ) {
-        if let Some((interface, (endpoint, size, interval))) = self.detector.configured(dev_addr, value) {
+    fn configured(&mut self, dev_addr: DeviceAddress, value: u8, host: &mut UsbHost<B>) {
+        if let Some((interface, (endpoint, size, interval))) =
+            self.detector.configured(dev_addr, value)
+        {
             if let Some(slot) = self.devices.iter_mut().find(|d| d.is_none()) {
                 match (
                     host.create_control_pipe(dev_addr),
-                    host.create_interrupt_pipe(dev_addr, endpoint, UsbDirection::In, size, interval),
+                    host.create_interrupt_pipe(
+                        dev_addr,
+                        endpoint,
+                        UsbDirection::In,
+                        size,
+                        interval,
+                    ),
                 ) {
                     (Some(control_pipe), None) => host.release_pipe(control_pipe),
                     (None, Some(interrupt_pipe)) => host.release_pipe(interrupt_pipe),
@@ -321,8 +374,8 @@ impl<B: HostBus, const MAX_HUBS: usize> Driver<B> for HubDriver<MAX_HUBS> {
                             control_state: ControlState::Idle,
                         });
                         self.event = Some(HubEvent::HubAdded(dev_addr));
-                    },
-                    (None, None) => {},
+                    }
+                    (None, None) => {}
                 }
             }
         }
@@ -337,7 +390,7 @@ impl<B: HostBus, const MAX_HUBS: usize> Driver<B> for HubDriver<MAX_HUBS> {
         if let Some(device) = self.find_device(dev_addr) {
             if pipe_id == device.control_pipe {
                 match device.control_state {
-                    ControlState::Idle => {},
+                    ControlState::Idle => {}
                     ControlState::GetDescriptor => {
                         if let Some(desc) = data.and_then(parse_hub_descriptor) {
                             device.control_state = ControlState::Idle;
@@ -369,12 +422,7 @@ impl<B: HostBus, const MAX_HUBS: usize> Driver<B> for HubDriver<MAX_HUBS> {
         }
     }
 
-    fn completed_in(
-        &mut self,
-        dev_addr: DeviceAddress,
-        pipe_id: crate::PipeId,
-        data: &[u8],
-    ) {
+    fn completed_in(&mut self, dev_addr: DeviceAddress, pipe_id: crate::PipeId, data: &[u8]) {
         if let Some(device) = self.find_device(dev_addr) {
             if pipe_id == device.interrupt_pipe {
                 let status = data[0];
@@ -397,23 +445,18 @@ impl<B: HostBus, const MAX_HUBS: usize> Driver<B> for HubDriver<MAX_HUBS> {
         }
     }
 
-    fn completed_out(
-        &mut self,
-        dev_addr: DeviceAddress,
-        pipe_id: crate::PipeId,
-        _data: &mut [u8],
-    ) {
+    fn completed_out(&mut self, dev_addr: DeviceAddress, pipe_id: crate::PipeId, _data: &mut [u8]) {
         todo!()
         // TODO
     }
 
-    fn stall(
-        &mut self,
-        dev_addr: DeviceAddress,
-    ) {
+    fn stall(&mut self, dev_addr: DeviceAddress) {
         if let Some(device) = self.find_device(dev_addr) {
             if device.control_state != ControlState::Idle {
-                error!("Stall received, aborting control state {}", device.control_state);
+                error!(
+                    "Stall received, aborting control state {}",
+                    device.control_state
+                );
             }
             self.event = Some(HubEvent::Stall(dev_addr));
         }

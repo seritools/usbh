@@ -53,12 +53,7 @@ impl<B: HostBus> Driver<B> for LogDriver {
         }
     }
 
-    fn descriptor(
-        &mut self,
-        dev_addr: DeviceAddress,
-        descriptor_type: u8,
-        data: &[u8],
-    ) {
+    fn descriptor(&mut self, dev_addr: DeviceAddress, descriptor_type: u8, data: &[u8]) {
         if self.0.contains(EventMask::DESCRIPTOR) {
             match descriptor_type {
                 descriptor::TYPE_DEVICE => {
@@ -130,12 +125,7 @@ impl<B: HostBus> Driver<B> for LogDriver {
         None
     }
 
-    fn configured(
-        &mut self,
-        dev_addr: DeviceAddress,
-        value: u8,
-        _host: &mut crate::UsbHost<B>,
-    ) {
+    fn configured(&mut self, dev_addr: DeviceAddress, value: u8, _host: &mut crate::UsbHost<B>) {
         if self.0.contains(EventMask::CONFIGURED) {
             info!(
                 "[usbh LogDriver] Device {} was configured with configuration {}",
@@ -161,12 +151,7 @@ impl<B: HostBus> Driver<B> for LogDriver {
         }
     }
 
-    fn completed_in(
-        &mut self,
-        dev_addr: DeviceAddress,
-        pipe_id: crate::PipeId,
-        _data: &[u8],
-    ) {
+    fn completed_in(&mut self, dev_addr: DeviceAddress, pipe_id: crate::PipeId, _data: &[u8]) {
         if self.0.contains(EventMask::COMPLETED_IN) {
             info!(
                 "[usbh LogDriver] Device {}: completed IN transfer on pipe {}",
@@ -176,12 +161,7 @@ impl<B: HostBus> Driver<B> for LogDriver {
         }
     }
 
-    fn completed_out(
-        &mut self,
-        dev_addr: DeviceAddress,
-        pipe_id: crate::PipeId,
-        _data: &mut [u8],
-    ) {
+    fn completed_out(&mut self, dev_addr: DeviceAddress, pipe_id: crate::PipeId, _data: &mut [u8]) {
         if self.0.contains(EventMask::COMPLETED_OUT) {
             info!(
                 "[usbh LogDriver] Device {}: completed OUT transfer on pipe {}",

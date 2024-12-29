@@ -11,20 +11,16 @@ pub struct SimpleDetector<
     const SUB_CLASS_CODE: u8,
     const EP_DIRECTION: u8,
     const EP_TYPE: u8,
-    > {
+> {
     dev_addr: Option<DeviceAddress>,
     config: Option<u8>,
     interface: Option<u8>,
     endpoint: Option<(u8, u16, u8)>,
 }
 
-impl<
-        const CLASS_CODE: u8,
-    const SUB_CLASS_CODE: u8,
-    const EP_DIRECTION: u8,
-    const EP_TYPE: u8,
-    > SimpleDetector<CLASS_CODE, SUB_CLASS_CODE, EP_DIRECTION, EP_TYPE> {
-
+impl<const CLASS_CODE: u8, const SUB_CLASS_CODE: u8, const EP_DIRECTION: u8, const EP_TYPE: u8>
+    SimpleDetector<CLASS_CODE, SUB_CLASS_CODE, EP_DIRECTION, EP_TYPE>
+{
     fn reset(&mut self, dev_addr: Option<DeviceAddress>) {
         self.dev_addr = dev_addr;
         self.config = None;
@@ -55,7 +51,9 @@ impl<
             descriptor::TYPE_INTERFACE => {
                 debug!("check iface");
                 if let Ok((_, interface)) = descriptor::parse::interface_descriptor(data) {
-                    if interface.interface_class == CLASS_CODE && interface.interface_sub_class == SUB_CLASS_CODE {
+                    if interface.interface_class == CLASS_CODE
+                        && interface.interface_sub_class == SUB_CLASS_CODE
+                    {
                         self.interface = Some(interface.interface_number);
                     }
                 }
@@ -64,8 +62,14 @@ impl<
                 debug!("check ep");
                 if self.interface.is_some() {
                     if let Ok((_, endpoint)) = descriptor::parse::endpoint_descriptor(data) {
-                        if endpoint.address.direction() as u8 == EP_DIRECTION && endpoint.attributes.transfer_type() as u8 == EP_TYPE {
-                            self.endpoint = Some((endpoint.address.number(), endpoint.max_packet_size, endpoint.interval));
+                        if endpoint.address.direction() as u8 == EP_DIRECTION
+                            && endpoint.attributes.transfer_type() as u8 == EP_TYPE
+                        {
+                            self.endpoint = Some((
+                                endpoint.address.number(),
+                                endpoint.max_packet_size,
+                                endpoint.interval,
+                            ));
                         }
                     }
                 }
@@ -74,7 +78,10 @@ impl<
                 // TODO
             }
         }
-        debug!("{}, {}, {}, {}", self.dev_addr, self.config, self.interface, self.endpoint);
+        debug!(
+            "{}, {}, {}, {}",
+            self.dev_addr, self.config, self.interface, self.endpoint
+        );
     }
 
     pub fn configure(&mut self, dev_addr: DeviceAddress) -> Option<u8> {
@@ -84,10 +91,19 @@ impl<
             .and_then(|_| self.config)
     }
 
-    pub fn configured(&mut self, dev_addr: DeviceAddress, value: u8) -> Option<(u8, (u8, u16, u8))> {
+    pub fn configured(
+        &mut self,
+        dev_addr: DeviceAddress,
+        value: u8,
+    ) -> Option<(u8, (u8, u16, u8))> {
         assert!(self.dev_addr == Some(dev_addr));
         let result = match self {
-            Self { config: Some(config), interface: Some(interface), endpoint: Some(endpoint), .. } if *config == value => Some((*interface, *endpoint)),
+            Self {
+                config: Some(config),
+                interface: Some(interface),
+                endpoint: Some(endpoint),
+                ..
+            } if *config == value => Some((*interface, *endpoint)),
             _ => None,
         };
         self.reset(None);

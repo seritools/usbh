@@ -92,9 +92,9 @@ use crate::{PipeId, UsbHost};
 
 pub mod detector;
 
+pub mod hub;
 pub mod kbd;
 pub mod log;
-pub mod hub;
 
 /// The Driver trait
 ///

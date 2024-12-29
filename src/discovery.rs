@@ -3,8 +3,8 @@ use crate::descriptor;
 use crate::driver::Driver;
 use crate::types::DeviceAddress;
 use crate::{Event, UsbHost};
-use usb_device::control::Recipient;
 use defmt::trace;
+use usb_device::control::Recipient;
 
 #[derive(Copy, Clone)]
 pub enum DiscoveryState {
@@ -53,14 +53,16 @@ pub fn process_discovery<B: HostBus>(
                     let data = host.bus.received_data(length as usize);
                     let Ok((_, descriptor)) = descriptor::parse::any_descriptor(data) else {
                         trace!("Failed to parse descriptor frame: {}", data);
-                        return DiscoveryState::ParseError
+                        return DiscoveryState::ParseError;
                     };
                     for driver in drivers {
                         driver.descriptor(dev_addr, descriptor.descriptor_type, descriptor.data);
                     }
-                    let Ok((_, device_descriptor)) = descriptor::parse::device_descriptor(descriptor.data) else {
+                    let Ok((_, device_descriptor)) =
+                        descriptor::parse::device_descriptor(descriptor.data)
+                    else {
                         trace!("Failed to parse device descriptor: {}", descriptor.data);
-                        return DiscoveryState::ParseError
+                        return DiscoveryState::ParseError;
                     };
 
                     // Unwrap safety: when a `Control*` event is emitted, the host is idle and a transfer can be started
@@ -73,8 +75,11 @@ pub fn process_discovery<B: HostBus>(
                         9,
                     )
                     .ok()
-                        .unwrap();
-                    trace!("-> ConfigDescLen(0, {})", device_descriptor.num_configurations);
+                    .unwrap();
+                    trace!(
+                        "-> ConfigDescLen(0, {})",
+                        device_descriptor.num_configurations
+                    );
                     DiscoveryState::ConfigDescLen(0, device_descriptor.num_configurations)
                 }
                 _ => state,
@@ -86,11 +91,16 @@ pub fn process_discovery<B: HostBus>(
                     let data = host.bus.received_data(length as usize);
                     let Ok((_, descriptor)) = descriptor::parse::any_descriptor(data) else {
                         trace!("Failed to parse descriptor frame: {}", data);
-                        return DiscoveryState::ParseError
+                        return DiscoveryState::ParseError;
                     };
-                    let Ok((_, total_length)) = descriptor::parse::configuration_descriptor_length(descriptor.data) else {
-                        trace!("Failed to extract length from configuration descriptor: {}", descriptor.data);
-                        return DiscoveryState::ParseError
+                    let Ok((_, total_length)) =
+                        descriptor::parse::configuration_descriptor_length(descriptor.data)
+                    else {
+                        trace!(
+                            "Failed to extract length from configuration descriptor: {}",
+                            descriptor.data
+                        );
+                        return DiscoveryState::ParseError;
                     };
                     // Unwrap safety: when a `Control*` event is emitted, the host is idle and a transfer can be started
                     host.get_descriptor(
@@ -102,7 +112,7 @@ pub fn process_discovery<B: HostBus>(
                         total_length,
                     )
                     .ok()
-                        .unwrap();
+                    .unwrap();
                     trace!("-> ConfigDesc({}, {})", n, m);
                     DiscoveryState::ConfigDesc(n, m)
                 }
@@ -116,7 +126,7 @@ pub fn process_discovery<B: HostBus>(
                     loop {
                         let Ok((rest, descriptor)) = descriptor::parse::any_descriptor(data) else {
                             trace!("Failed to parse descriptor frame: {}", data);
-                            return DiscoveryState::ParseError
+                            return DiscoveryState::ParseError;
                         };
                         for driver in &mut *drivers {
                             driver.descriptor(
