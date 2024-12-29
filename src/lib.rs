@@ -463,15 +463,14 @@ impl<B: HostBus> UsbHost<B> {
                 _ => {}
             },
 
-            State::Dormant(dev_addr) => match event {
-                Event::Detached => {
+            State::Dormant(dev_addr) => {
+                if let Event::Detached = event {
                     for driver in drivers {
                         driver.detached(*dev_addr);
                     }
                     self.reset();
                 }
-                _ => {}
-            },
+            }
         }
 
         if let State::Enumeration(EnumerationState::WaitForDevice) = self.state {

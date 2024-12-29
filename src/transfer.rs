@@ -11,6 +11,7 @@ enum TransferState {
     Control(UsbDirection, ControlState),
 }
 
+#[allow(clippy::enum_variant_names)]
 enum ControlState {
     WaitSetup,
     WaitData,

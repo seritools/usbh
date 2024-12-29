@@ -70,9 +70,9 @@ impl PendingKbdDevice {
     /// - an IN interrupt endpoint
     fn supported_config(&self) -> Option<u8> {
         self.interface
-            .and_then(|_| self.endpoint)
-            .and_then(|_| self.interval)
-            .and_then(|_| self.config)
+            .and(self.endpoint)
+            .and(self.interval)
+            .and(self.config)
     }
 }
 
@@ -80,7 +80,7 @@ impl PendingKbdDevice {
 ///
 /// The input report describes which keys are currently pressed.
 #[derive(Copy, Clone, defmt::Format)]
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct InputReport {
     /// Status of modifier keys
     pub modifier_status: ModifierStatus,
@@ -206,6 +206,12 @@ pub enum KbdError {
 impl From<ControlError> for KbdError {
     fn from(e: ControlError) -> Self {
         KbdError::ControlError(e)
+    }
+}
+
+impl<const MAX_DEVICES: usize> Default for KbdDriver<MAX_DEVICES> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -387,7 +393,7 @@ impl<B: HostBus> Driver<B> for KbdDriver {
 
     fn descriptor(&mut self, device_address: DeviceAddress, descriptor_type: u8, data: &[u8]) {
         if let Some(device) = self.find_pending_device(device_address) {
-            if descriptor_type == descriptor::TYPE_CONFIGURATION as u8 {
+            if descriptor_type == descriptor::TYPE_CONFIGURATION {
                 if device.interface.is_none() {
                     // we only care about new configurations if we haven't already found an interface that we can handle
                     if let Ok((_, config)) = descriptor::parse::configuration_descriptor(data) {
@@ -407,15 +413,16 @@ impl<B: HostBus> Driver<B> for KbdDriver {
                         device.interface = Some(interface.interface_number);
                     }
                 }
-            } else if descriptor_type == descriptor::TYPE_ENDPOINT {
-                if device.interface.is_some() && device.endpoint.is_none() {
-                    if let Ok((_, endpoint)) = descriptor::parse::endpoint_descriptor(data) {
-                        if endpoint.address.direction() == UsbDirection::In
-                            && endpoint.attributes.transfer_type() == TransferType::Interrupt
-                        {
-                            device.endpoint = Some(endpoint.address.number());
-                            device.interval = Some(endpoint.interval);
-                        }
+            } else if descriptor_type == descriptor::TYPE_ENDPOINT
+                && device.interface.is_some()
+                && device.endpoint.is_none()
+            {
+                if let Ok((_, endpoint)) = descriptor::parse::endpoint_descriptor(data) {
+                    if endpoint.address.direction() == UsbDirection::In
+                        && endpoint.attributes.transfer_type() == TransferType::Interrupt
+                    {
+                        device.endpoint = Some(endpoint.address.number());
+                        device.interval = Some(endpoint.interval);
                     }
                 }
             }

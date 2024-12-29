@@ -50,9 +50,9 @@ impl Bcd16 {
     }
 
     pub(crate) fn is_valid(value: u16) -> bool {
-        (value >> 12 & 0xF) < 10
-            && (value >> 8 & 0xF) < 10
-            && (value >> 4 & 0xF) < 10
+        ((value >> 12) & 0xF) < 10
+            && ((value >> 8) & 0xF) < 10
+            && ((value >> 4) & 0xF) < 10
             && (value & 0xF) < 10
     }
 }

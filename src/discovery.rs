@@ -135,7 +135,7 @@ pub fn process_discovery<B: HostBus>(
                                 descriptor.data,
                             );
                         }
-                        if rest.len() > 0 {
+                        if !rest.is_empty() {
                             data = rest;
                         } else {
                             break;

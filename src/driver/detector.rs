@@ -29,7 +29,7 @@ impl<const CLASS_CODE: u8, const SUB_CLASS_CODE: u8, const EP_DIRECTION: u8, con
     }
 
     pub fn attached(&mut self, dev_addr: DeviceAddress) {
-        assert!(self.dev_addr == None);
+        assert!(self.dev_addr.is_none());
         self.reset(Some(dev_addr));
     }
 
@@ -86,9 +86,7 @@ impl<const CLASS_CODE: u8, const SUB_CLASS_CODE: u8, const EP_DIRECTION: u8, con
 
     pub fn configure(&mut self, dev_addr: DeviceAddress) -> Option<u8> {
         assert!(self.dev_addr == Some(dev_addr));
-        self.endpoint
-            .and_then(|_| self.interface)
-            .and_then(|_| self.config)
+        self.endpoint.and(self.interface).and(self.config)
     }
 
     pub fn configured(

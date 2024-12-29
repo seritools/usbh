@@ -2,7 +2,7 @@ use super::{detector::SimpleDetector, Driver};
 use crate::bus::HostBus;
 use crate::types::{ConnectionSpeed, DeviceAddress, SetupPacket, TransferType};
 use crate::{ControlError, PipeId, UsbHost};
-use defmt::{bitflags, debug, error, info, Format};
+use defmt::{bitflags, error, Format};
 use usb_device::control::Request;
 use usb_device::{
     control::{Recipient, RequestType},
@@ -162,6 +162,12 @@ pub struct HubDriver<const MAX_HUBS: usize = 4> {
     detector:
         SimpleDetector<0x09, 0x00, { UsbDirection::In as u8 }, { TransferType::Interrupt as u8 }>,
     event: Option<HubEvent>,
+}
+
+impl<const MAX_HUBS: usize> Default for HubDriver<MAX_HUBS> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<const MAX_HUBS: usize> HubDriver<MAX_HUBS> {
