@@ -3,11 +3,7 @@ name = "usbh"
 version = "0.1.0"
 authors = ["Niklas Cathor"]
 edition = "2021"
-keywords = [
-    "no-std",
-    "embedded",
-    "usb",
-]
+keywords = ["no-std", "embedded", "usb"]
 license = "MIT"
 readme = "README.md"
 description = "Experimental host-side USB stack for embedded devices."
@@ -19,5 +15,5 @@ repository = "https://github.com/nilclass/usbh"
 [dependencies]
 defmt = "0.3.5"
 embed-doc-image = "0.1.4"
-usb-device = { version = "0.2.9", features = ["defmt"] }
+usb-device = { version = "0.3.2", features = ["defmt"] }
 nom = { version = "7.1.3", default-features = false }
