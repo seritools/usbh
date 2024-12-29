@@ -440,7 +440,10 @@ impl Inner {
         }
         let ap = self.allocated_pipes;
 
-        let free_index = (0..15).find(|i| ap & (1 << i) == 0)? as u8;
+        let free_index = ap.trailing_ones() as u8;
+        if free_index > 15 {
+            return None;
+        }
 
         // for simplicity, all pipes are considered to be 64 bytes long for now.
         // This is the maximum supported size for pipes other than Isochronous, which are not implemented yet.
