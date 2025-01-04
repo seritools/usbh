@@ -90,6 +90,7 @@ pub struct InputReport {
 }
 
 impl InputReport {
+    #[inline]
     pub fn pressed_keys(&self) -> impl Iterator<Item = u8> + '_ {
         self.keypress
             .iter()
@@ -116,16 +117,19 @@ pub struct ModifierStatus(u8);
 
 impl ModifierStatus {
     /// Is left `Ctrl` pressed?
+    #[inline(always)]
     pub fn left_ctrl(&self) -> bool {
         self.0 & 1 == 1
     }
 
     /// Is left `Shift` pressed?
+    #[inline(always)]
     pub fn left_shift(&self) -> bool {
         (self.0 >> 1) & 1 == 1
     }
 
     /// Is left `Alt` pressed?
+    #[inline(always)]
     pub fn left_alt(&self) -> bool {
         (self.0 >> 2) & 1 == 1
     }
@@ -133,21 +137,25 @@ impl ModifierStatus {
     /// Is left `Gui` pressed?
     ///
     /// The `Gui` button is also known as the `Super` or `Windows` key.
+    #[inline(always)]
     pub fn left_gui(&self) -> bool {
         (self.0 >> 3) & 1 == 1
     }
 
     /// Is right `Ctrl` pressed?
+    #[inline(always)]
     pub fn right_ctrl(&self) -> bool {
         (self.0 >> 4) & 1 == 1
     }
 
     /// Is right `Shift` pressed?
+    #[inline(always)]
     pub fn right_shift(&self) -> bool {
         (self.0 >> 5) & 1 == 1
     }
 
     /// Is right `Alt` pressed?
+    #[inline(always)]
     pub fn right_alt(&self) -> bool {
         (self.0 >> 6) & 1 == 1
     }
@@ -155,6 +163,7 @@ impl ModifierStatus {
     /// Is right `Gui` pressed?
     ///
     /// The `Gui` button is also known as the `Super` or `Windows` key.
+    #[inline(always)]
     pub fn right_gui(&self) -> bool {
         (self.0 >> 7) & 1 == 1
     }
